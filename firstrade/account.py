@@ -1,4 +1,3 @@
-import json
 import os
 import pickle
 
@@ -61,6 +60,7 @@ class FTSession:
         phone=None,
         mfa_secret=None,
         profile_path=None,
+        proxy=None,
     ):
         """
         Initializes a new instance of the FTSession class.
@@ -85,6 +85,16 @@ class FTSession:
         self.login_json = None
         self.session = requests.Session()
 
+        if proxy:  # Set the proxy if provided
+            self.session.proxies.update(proxy)
+    
+    def check_proxy(self):
+        url = 'https://httpbin.org/ip'
+        print(f"Checking current IP using proxy: {self.session.proxies.update}")
+        response = self.session.get(url)
+        print(f"Response from httpbin: {response.json()}")
+        return response.json()
+    
     def login(self):
         """
         Validates and logs into the Firstrade platform.
@@ -112,10 +122,7 @@ class FTSession:
             url=urls.login(),
             data=data,
         )
-        try:
-            self.login_json = response.json()
-        except json.decoder.JSONDecodeError:
-            raise LoginResponseError("Invalid JSON is your account funded?")
+        self.login_json = response.json()
         if (
             "mfa" not in self.login_json
             and "ftat" in self.login_json
